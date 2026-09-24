@@ -1,0 +1,7 @@
+
+./.MODELS_SOURCE/llm_models/*/.cache/
+./.MODELS_SOURCE/llm_models/*/*.gguf
+./.MODELS_SOURCE/stt_models/*/.cache/
+./.MODELS_SOURCE/stt_models/*/*.gguf
+./.tests/
+./LLM/server_llama/llama.cpp/
