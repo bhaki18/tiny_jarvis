@@ -56,6 +56,8 @@ Sei integrato con il modulo decisionale ed esecutivo Jev.
 REGOLE DI RISPOSTA:
 1. Rispondi all'utente in modo chiaro, naturale e cordiale.
 2. Alla FINE della tua risposta, aggiungi SEMPRE il tag <tool> specificando lo strumento tecnico necessario per compiere l'azione richiesta:
+   - Se l'utente chiede di cercare sul web, leggere una pagina internet, o ispezionare un URL (es. github, siti web):
+     <tool>run_shell_tool.py curl -sL <url_valido> -o temp/web_search.txt && python backcall_llm.py temp/web_search.txt + "estrai e sintetizza le informazioni richieste dall'utente"</tool>
    - Se l'utente chiede di eseguire un comando da terminale, creare file o cartelle, o avviare applicazioni (es. spotify, browser, bash):
      <tool>run_shell_tool.py <comando_effettivo></tool>
    - Se l'utente chiede di trascrivere un file audio:
@@ -64,12 +66,12 @@ REGOLE DI RISPOSTA:
      <tool>nothing</tool>
 
 ESEMPI:
+- Utente: "cerca sul web https://github.com/bhaki18 e dimmi il nome dell'account"
+  Risposta: Certamente! Sto cercando sul web la pagina di bhaki18 per verificare il nome del profilo. 🌐
+  <tool>run_shell_tool.py curl -sL https://github.com/bhaki18 -o temp/web_search.txt && python backcall_llm.py temp/web_search.txt + "estrai e sintetizza il nome dell'account e della persona"</tool>
+
 - Utente: "apri spotify"
   Risposta: Certamente! Sto avviando Spotify per te. 🎵
-  <tool>run_shell_tool.py spotify</tool>
-
-- Utente: "esegui il comando: spotify"
-  Risposta: Avvio subito Spotify. 🎵
   <tool>run_shell_tool.py spotify</tool>
 
 - Utente: "crea una cartella test sul desktop"
@@ -140,10 +142,17 @@ while (run_cli) {
     const toolMatch = raw_answer.match(/<tool>([\s\S]*?)<\/tool>/i);
     let extracted_tool = toolMatch ? toolMatch[1].trim() : null;
 
-    // Fallback: se l'utente ha scritto esplicitamente "esegui il comando: <cmd>"
+    // Fallback: se l'utente ha scritto esplicitamente comandi o ricerche web
     if (!extracted_tool || extracted_tool === "nothing") {
+        const urlMatch = user_req.match(/(?:https?:\/\/|www\.)[^\s]+/i) || user_req.match(/github(?:\.com)?\/[a-zA-Z0-9_-]+/i);
         const explicitCmd = user_req.match(/^(?:esegui\s+(?:il\s+)?comando\s*:?\s*)(.+)/i);
-        if (explicitCmd) {
+
+        if (urlMatch) {
+            let targetUrl = urlMatch[0];
+            if (targetUrl.includes("github/")) targetUrl = targetUrl.replace("github/", "github.com/");
+            if (!targetUrl.startsWith("http")) targetUrl = "https://" + targetUrl;
+            extracted_tool = `run_shell_tool.py curl -sL ${targetUrl} -o temp/web_search.txt && python backcall_llm.py temp/web_search.txt + "${user_req.replace(/"/g, "'")}"`;
+        } else if (explicitCmd) {
             extracted_tool = `run_shell_tool.py ${explicitCmd[1].trim()}`;
         } else {
             extracted_tool = "nothing";
