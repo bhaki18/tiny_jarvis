@@ -3,5 +3,8 @@
 ./.MODELS_SOURCE/llm_models/*/*.gguf
 ./.MODELS_SOURCE/stt_models/*/.cache/
 ./.MODELS_SOURCE/stt_models/*/*.gguf
+./.MODELS_SOURCE/jevlike_models*/*.gguf
+./.MODELS_SOURCE/jevlike_models*/*.cache
 ./.tests/
 ./LLM/server_llama/llama.cpp/
+./chats
