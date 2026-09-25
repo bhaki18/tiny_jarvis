@@ -14,8 +14,6 @@ JEVLIKE_DIR="$BASE_DIR/.MODELS_SOURCE/jevlike_models/jev-style-Qwen3.5-2B-Decisi
 LLAMA_DIR="$BASE_DIR/LLM/server_llama"
 LLAMA_REPO="$LLAMA_DIR/llama.cpp"
 
-BUILD_DIR="$BASE_DIR/build"
-
 # --------------------------------------------------
 # Dipendenze
 # --------------------------------------------------
@@ -152,7 +150,6 @@ else
     echo -e "${RED}ERRORE: si è verificato un errore durante l'installazione del modello Jev-like [ERR]${RESET}"
 
 fi
-
 
 # --------------------------------------------------
 # Fine

@@ -10,37 +10,38 @@ Creare un assistente vocale e testuale in grado di:
 - **Trascrivere audio in testo (STT)** tramite modelli Whisper locali.
 - **Comprendere ed elaborare richieste (LLM)** per riassumere, analizzare e conversare.
 - **Selezionare ed eseguire tool autonomamente** (tool selection / function calling tramite modello decisionale dedicato).
-- **Interagire con il sistema**: eseguire comandi bash, leggere/scrivere file, ed effettuare ricerche web.
+- **Interagire con il sistema**: eseguire comandi bash, gestire file, avviare applicazioni ed effettuare ricerche.
 
 ---
 
 ## 🏗️ Architettura & Flusso
 
 ```text
-Richiesta Utente (Testo / Voce)
+Richiesta Utente (Testo / Voce / GUI)
            │
            ▼
-     Modello LLM / Decision
+     Modello LLM (Qwen 3.5 4B :8080)
            │
            ▼
-     Tool Selector (Jev-Style)
+  Estrazione Tag <tool>
            │
            ▼
-     Esecuzione Tool ──► Output
+  Tool Selector (Jev-Style Decision)
            │
            ▼
-      Modello LLM (Sintesi finale)
+  Esecuzione Tool (Linux OS) ──► Output (stdout/stderr)
            │
            ▼
-      Risposta all'Utente
+  Risposta & Visualizzazione (CLI / GUI ChatGPT-Style)
 ```
 
 ### Componenti Principali
-- **LLM Principale**: Qwen 3.5 4B (GGUF `Q4_K_M`) — serve porta `8080`
-- **Tool Selector**: Jev-Style Qwen 3.5 2B Decision (GGUF `Q4_K_M`) — serve porta `8081`
-- **STT (Speech-to-Text)**: Whisper Large v3 Turbo (GGUF) via `whisper.cpp`
+- **LLM Principale**: Qwen 3.5 4B (GGUF `Q4_K_M`) — server porta `8080`
+- **Tool Selector**: Jev-Style Qwen 3.5 2B Decision (GGUF `Q4_K_M`) — server porta `8081`
+- **STT (Speech-to-Text)**: Whisper Large v3 Turbo (GGUF) via `whisper.cpp` e supporto vocale browser
 - **Inference Engine**: `llama.cpp` (`llama-server`) nativo ad alte prestazioni
-- **Interfaccia Utente**: CLI reattiva in Node.js con salvataggio delle cronologie di chat
+- **Interfaccia Grafica (GUI)**: UI web moderna dark-mode in stile ChatGPT (HTML5 / Vanilla CSS / Vanilla JS) con backend locale in Node.js per l'esecuzione dei comandi
+- **Interfaccia a riga di comando (CLI)**: CLI reattiva in Node.js con memorizzazione delle chat su disco
 
 ---
 
@@ -68,14 +69,31 @@ Avvia le istanze di `llama-server` in background (LLM su porta 8080 e Jev-Style 
 bash start_servers.sh
 ```
 
-### 3. Avvio della CLI
-In una nuova sessione di terminale, avvia la Command Line Interface:
+### 3. Avvio della GUI (Consigliato 🌐)
+Per avviare l'interfaccia grafica in stile ChatGPT:
+
+- **Metodo Automatico (Python)**:
+  Controlla che i server siano pronti, avvia il server GUI e apre il browser:
+  ```bash
+  python start.py
+  ```
+
+- **Metodo Diretto (Node.js)**:
+  ```bash
+  node GUI/GUI_servers.js
+  ```
+  Quindi collegati a [http://127.0.0.1:3000](http://127.0.0.1:3000).
+
+### 4. Avvio della CLI (Terminale 💻)
+In alternativa, puoi utilizzare la Command Line Interface testuale:
 
 ```bash
+python start_cli.py
+# oppure
 node CLI/cli.js
 ```
 
-Le conversazioni verranno salvate automaticamente all'interno della cartella `chats/`.
+Le conversazioni e i log dei comandi eseguiti vengono salvati automaticamente all'interno della cartella `chats/`.
 
 ---
 
@@ -85,8 +103,10 @@ Le conversazioni verranno salvate automaticamente all'interno della cartella `ch
   - [x] Download e setup automatizzato modelli GGUF
   - [x] Compilazione ed orchestrazione dual-server `llama.cpp`
   - [x] CLI interattiva con memoria e logging chat
-  - [ ] Integrazione completa Speech-to-Text (`whisper.cpp`)
-  - [ ] Esecuzione dinamica dei primi tool di sistema (lettura/scrittura file e shell)
+  - [x] Interfaccia grafica Desktop/Web ChatGPT-Style in Vanilla JS & CSS
+  - [x] Backend locale Node.js (`GUI_servers.js`) per esecuzione tool da interfaccia grafica
+  - [x] Esecuzione dinamica dei primi tool di sistema (shell bash, filesystem, app)
+  - [ ] Integrazione completa Speech-to-Text nativa (`whisper.cpp`)
 
 ---
 
