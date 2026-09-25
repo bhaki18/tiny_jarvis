@@ -50,16 +50,35 @@ async function ask() {
 }
 
 
-const JARVIS_SYSTEM_PROMPT = `Sei Tiny Jarvis, un assistente AI avanzato che opera localmente sul computer dell'utente.
-Sei integrato con un modulo decisionale ed esecutivo (Jev) collegato direttamente al sistema operativo, in grado di:
-- Eseguire realmente comandi bash da terminale.
-- Creare, spostare, eliminare o leggere cartelle e file.
-- Trascrivere audio in testo.
+const JARVIS_SYSTEM_PROMPT = `Sei Tiny Jarvis, un assistente AI avanzato che opera localmente sul computer dell'utente (Linux).
+Sei integrato con il modulo decisionale ed esecutivo Jev.
 
-REGOLE FONDAMENTALI:
-1. NON dire mai che sei solo un modello di linguaggio o che non hai accesso al filesystem/sistema operativo: Jev esegue le operazioni richieste in background per te.
-2. Quando l'utente ti chiede di eseguire un comando o compiere un'azione sul sistema, conferma l'esecuzione in modo chiaro, amichevole e sintetico.
-3. Se l'utente fa domande generali o richieste di spiegazioni, rispondi normalmente con tono professionale e collaborativo.`;
+REGOLE DI RISPOSTA:
+1. Rispondi all'utente in modo chiaro, naturale e cordiale.
+2. Alla FINE della tua risposta, aggiungi SEMPRE il tag <tool> specificando lo strumento tecnico necessario per compiere l'azione richiesta:
+   - Se l'utente chiede di eseguire un comando da terminale, creare file o cartelle, o avviare applicazioni (es. spotify, browser, bash):
+     <tool>run_shell_tool.py <comando_effettivo></tool>
+   - Se l'utente chiede di trascrivere un file audio:
+     <tool>use_stt.py <file_audio></tool>
+   - Se è una semplice domanda, saluto o non serve eseguire alcun comando sul sistema operativo:
+     <tool>nothing</tool>
+
+ESEMPI:
+- Utente: "apri spotify"
+  Risposta: Certamente! Sto avviando Spotify per te. 🎵
+  <tool>run_shell_tool.py spotify</tool>
+
+- Utente: "esegui il comando: spotify"
+  Risposta: Avvio subito Spotify. 🎵
+  <tool>run_shell_tool.py spotify</tool>
+
+- Utente: "crea una cartella test sul desktop"
+  Risposta: Creo immediatamente la cartella test sulla tua scrivania.
+  <tool>run_shell_tool.py mkdir -p ~/Scrivania/test</tool>
+
+- Utente: "ciao come stai?"
+  Risposta: Ciao! Tutto bene, sono pronto ad aiutarti.
+  <tool>nothing</tool>`;
 
 async function askLLM(prompt) {
     const response = await fetch(`http://${LLM_SERVER}/v1/chat/completions`, {
@@ -115,12 +134,33 @@ while (run_cli) {
     }
 
     await chat_log("user", user_req, CHAT_PATH);
-    const answer = await askLLM(user_req);
-    await chat_log("jarvis", answer, CHAT_PATH);
-    console.log(answer);
+    const raw_answer = await askLLM(user_req);
 
-    const jev_res = await askJev(user_req);
-    await execute_jev_choice(jev_res, CHAT_PATH);
+    // 1. Estrae l'intento tecnico dal tag <tool> generato dall'LLM
+    const toolMatch = raw_answer.match(/<tool>([\s\S]*?)<\/tool>/i);
+    let extracted_tool = toolMatch ? toolMatch[1].trim() : null;
+
+    // Fallback: se l'utente ha scritto esplicitamente "esegui il comando: <cmd>"
+    if (!extracted_tool || extracted_tool === "nothing") {
+        const explicitCmd = user_req.match(/^(?:esegui\s+(?:il\s+)?comando\s*:?\s*)(.+)/i);
+        if (explicitCmd) {
+            extracted_tool = `run_shell_tool.py ${explicitCmd[1].trim()}`;
+        } else {
+            extracted_tool = "nothing";
+        }
+    }
+
+    // 2. Pulisce la risposta per l'utente rimuovendo i tag <tool>
+    const clean_answer = raw_answer.replace(/<tool>[\s\S]*?<\/tool>/gi, "").trim();
+    await chat_log("jarvis", clean_answer, CHAT_PATH);
+    console.log(clean_answer);
+
+    // 3. Instrada ed esegue il Tool selezionato
+    const command_to_run = (extracted_tool && extracted_tool !== "nothing")
+        ? `tool_selector.py use ${extracted_tool}`
+        : "tool_selector.py nothing";
+
+    await execute_jev_choice(command_to_run, CHAT_PATH);
 }
 
 async function chat_log(role, content, chat) {
@@ -135,79 +175,67 @@ async function chat_log(role, content, chat) {
 }
 
 
-async function askJev(prompt) {
-    const systemPrompt = `Sei il modulo di selezione dei tool per un assistente AI locale.
-In base alla richiesta, rispondi con il comando appropriato:
-
-- Se la richiesta richiede di eseguire comandi da terminale, creare file o cartelle, o interagire col sistema:
-tool_selector.py use run_shell_tool.py <comando_bash>
-
-- Se la richiesta richiede di trascrivere un file audio:
-tool_selector.py use use_stt.py <file_audio>
-
-- Se la richiesta richiede una rielaborazione LLM:
-tool_selector.py use backcall_llm.py <testo>
-
-- Se è un semplice saluto, una normale conversazione o una risposta testuale che non richiede tool di sistema:
-tool_selector.py nothing
-
-Regola: scrivi direttamente il comando da eseguire sostituendo i parametri senza parentesi angolari.`;
-
-    const response = await fetch(`http://${JEVLIKE_SERVER}/v1/chat/completions`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            messages: [
-                {
-                    role: "system",
-                    content: systemPrompt
-                },
-                {
-                    role: "user",
-                    content: prompt
-                }
-            ],
-            max_tokens: 500,
-            temperature: 0.2,
-            presence_penalty: 0.4
-        })
-    });
-
-    if (!response.ok) {
-        throw new Error(`Jev-like HTTP ${response.status}`);
+async function askJev(tool_intent) {
+    // Se non serve compiere alcuna azione, Jev non interviene
+    if (!tool_intent || tool_intent === "nothing") {
+        return "tool_selector.py nothing";
     }
 
-    const data = await response.json();
-    const rawContent = data.choices[0].message.content || "";
+    const systemPrompt = `Sei il modulo di controllo di Tiny Jarvis.
+Valuta l'azione richiesta.
+Se è un comando o azione valida da eseguire: rispondi USE.
+Se non serve fare nulla o è vuota: rispondi NOTHING.
+Rispondi con una sola parola: USE o NOTHING.`;
 
-    // 1. Cerca il comando nella porzione finale dopo l'eventuale ragionamento </think>
-    const afterThink = rawContent.includes("</think>") 
-        ? rawContent.split("</think>").pop() 
-        : rawContent;
+    try {
+        const response = await fetch(`http://${JEVLIKE_SERVER}/v1/chat/completions`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                messages: [
+                    {
+                        role: "system",
+                        content: systemPrompt
+                    },
+                    {
+                        role: "user",
+                        content: tool_intent
+                    }
+                ],
+                max_tokens: 15,
+                temperature: 0.1
+            })
+        });
 
-    const regex = /tool_selector\.py\s+(use|nothing)[^\r\n<]*/i;
-    let match = afterThink.match(regex);
+        if (!response.ok) {
+            return `tool_selector.py use ${tool_intent}`;
+        }
 
-    // 2. Se non lo trova dopo il think, cerca nell'intero testo generato
-    if (!match) {
-        match = rawContent.match(regex);
+        const data = await response.json();
+        const content = (data.choices[0].message.content || "").trim();
+        const firstWord = content.split(/[\s\n]+/)[0].toUpperCase();
+
+        if (firstWord.includes("USE")) {
+            return `tool_selector.py use ${tool_intent}`;
+        } else {
+            return "tool_selector.py nothing";
+        }
+    } catch {
+        return `tool_selector.py use ${tool_intent}`;
     }
-
-    if (match) {
-        return match[0].trim();
-    }
-
-    return afterThink.trim();
 }
 
-async function execute_jev_choice(jev_process, chatPath) {
-    if (!jev_process) return;
-
+async function execute_jev_choice(jev_process, chatPath, extracted_tool) {
     // Estrae il comando effettivo
-    const match = jev_process.match(/tool_selector\.py\s+(use|nothing)[^\r\n<]*/i);
-    const validCommand = match ? match[0].trim() : null;
+    const match = jev_process ? jev_process.match(/tool_selector\.py\s+(use|nothing)[^\r\n<]*/i) : null;
+    let validCommand = match ? match[0].trim() : null;
+
+    // Fallback automatico se Jev non ha formattato ma l'LLM ha estratto un tool valido
+    if (!validCommand && extracted_tool && extracted_tool !== "nothing") {
+        validCommand = `tool_selector.py use ${extracted_tool}`;
+    }
 
     if (!validCommand || validCommand.includes("nothing")) {
         return;
