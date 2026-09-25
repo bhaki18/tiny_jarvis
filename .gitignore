@@ -1,10 +1,18 @@
+# --- Modelli e Cache pesanti ---
+*.gguf
+**/.cache/
 
-./.MODELS_SOURCE/llm_models/*/.cache/
-./.MODELS_SOURCE/llm_models/*/*.gguf
-./.MODELS_SOURCE/stt_models/*/.cache/
-./.MODELS_SOURCE/stt_models/*/*.gguf
-./.MODELS_SOURCE/jevlike_models*/*.gguf
-./.MODELS_SOURCE/jevlike_models*/*.cache
-./.tests/
-./LLM/server_llama/llama.cpp/
-./chats
+# --- Cartelle del progetto ignorate ---
+/.tests/
+/chats/
+/LLM/server_llama/llama.cpp/
+
+# --- Dipendenze e runtime (Node / JS) ---
+node_modules/
+npm-debug.log*
+
+# --- File temporanei e di sistema ---
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
