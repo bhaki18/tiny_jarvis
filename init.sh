@@ -50,6 +50,12 @@ else
 echo -e "${RED}ERRORE: si è verificato un errore durante l'installazione di nodeJS [ERR]${RESET}"
 fi
 
+if sudo pacman -S --noconfirm python-requests > /dev/null 2>&1;then 
+echo -e "python-requests installato ${GREEN}[OK]${RESET}"
+else
+echo -e "${RED}ERRORE: si è verificato un errore durante l'installazione di python-requests [ERR]${RESET}"
+fi
+
 # --------------------------------------------------
 # Modello LLM
 # --------------------------------------------------
