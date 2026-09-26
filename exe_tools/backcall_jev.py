@@ -97,17 +97,21 @@ def main():
     enriched_prompt = expand_file_references(raw_prompt)
 
     env = os.environ.copy()
-    env["PYTHONPATH"] = f"{SCRIPT_DIR}:{env.get('PYTHONPATH', '')}"
-    env["PATH"] = f"{SCRIPT_DIR}:{env.get('PATH', '')}"
+    env["PYTHONPATH"] = f"{SCRIPT_DIR}{os.pathsep}{env.get('PYTHONPATH', '')}"
+    env["PATH"] = f"{SCRIPT_DIR}{os.pathsep}{env.get('PATH', '')}"
     if chat_file:
         env["TINY_JARVIS_CHAT"] = os.path.basename(chat_file)
+
+    popen_kwargs = {"shell": True, "cwd": ROOT_DIR, "env": env}
+    if sys.platform != "win32" and os.path.exists("/bin/bash"):
+        popen_kwargs["executable"] = "/bin/bash"
 
     # 1. Se il comando passato include già pipeline shell esplicite (es. tool_selector o concatenazioni &)
     if "tool_selector.py" in raw_prompt or "run_shell_tool.py" in raw_prompt or "backcall_llm.py" in raw_prompt:
         if chat_file:
             append_to_chat(chat_file, "jev_action", f"Esecuzione pipeline: {raw_prompt}")
         print(f"[Jev Executing Pipeline]: {raw_prompt}")
-        proc = subprocess.Popen(raw_prompt, shell=True, cwd=ROOT_DIR, env=env, executable="/bin/bash")
+        proc = subprocess.Popen(raw_prompt, **popen_kwargs)
         proc.wait()
         return
 
@@ -148,8 +152,8 @@ def main():
     # Se la decisione contiene un comando o tool, eseguilo tramite tool_selector o bash
     cmd_match = re.search(r'(?:tool_selector\.py|run_shell_tool\.py|backcall_llm\.py)[^\r\n]*', decision_text)
     if cmd_match:
-        cmd_to_run = f"python {cmd_match.group(0)}"
-        proc = subprocess.Popen(cmd_to_run, shell=True, cwd=ROOT_DIR, env=env, executable="/bin/bash")
+        cmd_to_run = f"{sys.executable} {cmd_match.group(0)}"
+        proc = subprocess.Popen(cmd_to_run, **popen_kwargs)
         proc.wait()
 
 if __name__ == "__main__":

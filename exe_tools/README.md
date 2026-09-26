@@ -1,6 +1,6 @@
 # Tiny Jarvis Execution Tools (`exe_tools/`) 🛠️
 
-Questo modulo contiene gli strumenti modulari di Tiny Jarvis per l'esecuzione di comandi sul sistema operativo Linux, l'elaborazione autonoma di file e pagine web, il loop di retroazione con i modelli e la trascrizione vocale.
+Questo modulo contiene gli strumenti modulari di Tiny Jarvis per l'esecuzione di comandi sul sistema operativo (Linux e Windows), l'elaborazione autonoma di file e pagine web, il loop di retroazione con i modelli e la trascrizione vocale.
 
 ---
 
@@ -9,7 +9,7 @@ Questo modulo contiene gli strumenti modulari di Tiny Jarvis per l'esecuzione di
 | Script | Funzione | Esempio di Invocazione |
 | :--- | :--- | :--- |
 | **[`tool_selector.py`](file:///home/adp/Scrivania/tiny_jarvis/exe_tools/tool_selector.py)** | Router di smistamento ed esecuzione comandi | `python tool_selector.py use run_shell_tool.py spotify` |
-| **[`run_shell_tool.py`](file:///home/adp/Scrivania/tiny_jarvis/exe_tools/run_shell_tool.py)** | Esecutore shell bash non-bloccante | `python run_shell_tool.py mkdir -p ~/Scrivania/test` |
+| **[`run_shell_tool.py`](file:///home/adp/Scrivania/tiny_jarvis/exe_tools/run_shell_tool.py)** | Esecutore shell generico non-bloccante | `python run_shell_tool.py mkdir -p test` |
 | **[`backcall_llm.py`](file:///home/adp/Scrivania/tiny_jarvis/exe_tools/backcall_llm.py)** | Retroazione LLM (:8080) con analisi file & sintesi web | `python backcall_llm.py temp/web_search.txt + "riassumi i contenuti"` |
 | **[`backcall_jev.py`](file:///home/adp/Scrivania/tiny_jarvis/exe_tools/backcall_jev.py)** | Decisione ed esecuzione avanzata tramite Jev (:8081) | `python backcall_jev.py "apri browser su google"` |
 | **[`use_stt.py`](file:///home/adp/Scrivania/tiny_jarvis/exe_tools/use_stt.py)** | Trascrizione offline con Whisper.cpp | `python use_stt.py registrazione.wav` |
@@ -25,9 +25,9 @@ Questo modulo contiene gli strumenti modulari di Tiny Jarvis per l'esecuzione di
   - `nothing`: operazione no-op, non viene eseguita alcuna azione sul sistema.
 
 ### 2. `run_shell_tool.py`
-Riceve una stringa di argomenti e li concatena eseguendoli in una subshell bash (`subprocess.Popen(..., shell=True)`). È ideale per:
+Riceve una stringa di argomenti e li concatena eseguendoli nella shell predefinita del sistema (`subprocess.Popen(..., shell=True)`). È ideale per:
 - Avvio di applicazioni desktop in background (`spotify`, `firefox`, ecc.).
-- Gestione di file, cartelle e diagnostica di sistema (`mkdir`, `rm`, `ls`, `uname -a`).
+- Gestione di file, cartelle e diagnostica di sistema (`mkdir`, `rm`, `ls`/`dir`).
 - Download di risorse web (`curl -sL <url> -o temp/web_search.txt`).
 
 ### 3. `backcall_llm.py`
@@ -40,10 +40,10 @@ Permette a Tiny Jarvis di elaborare file e pagine web e inviare una seconda rich
 ### 4. `backcall_jev.py`
 Svolge una funzione simile a `backcall_llm.py` ma si appoggia al modello decisionale Jev (porta `8081`):
 - Ideale per risolvere pipeline shell complesse o richieste con più passi sequenziali.
-- Esegue direttamente i comandi validati o raffinati dal modello Jev.
+- Esegue direttamente i comandi validati o raffinati dal modello Jev usando la shell appropriata per l'OS in uso.
 
 ### 5. `use_stt.py`
 Interfaccia verso il motore di Speech-to-Text locale:
-- Invoca il binario precompilato [`whisper-cpp-linux-x64-cpu`](file:///home/adp/Scrivania/tiny_jarvis/STT/server_whisper/whisper-cpp-linux-x64-cpu).
+- Invoca il binario precompilato (`whisper-cpp-win-x64.exe` su Windows oppure [`whisper-cpp-linux-x64-cpu`](file:///home/adp/Scrivania/tiny_jarvis/STT/server_whisper/whisper-cpp-linux-x64-cpu) su Linux).
 - Utilizza il modello GGUF `whisper-large-v3-turbo-Q8_0.gguf`.
 - Salva la trascrizione testuale risultante all'interno di `chats/transcriptions/`.

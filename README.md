@@ -1,6 +1,6 @@
 # Tiny Jarvis 🤖
 
-Un agente AI locale intelligente, leggero e modulare, progettato per operare interamente sul tuo dispositivo Linux con modelli open source all'avanguardia.
+Un agente AI locale intelligente, leggero e modulare, progettato per operare interamente sul tuo dispositivo (Linux - Arch/Debian/Ubuntu - e Windows) con modelli open source all'avanguardia.
 
 ---
 
@@ -9,7 +9,7 @@ Un agente AI locale intelligente, leggero e modulare, progettato per operare int
 Creare un assistente personale autonomo, sia testuale sia vocale, in grado di:
 - **Comprendere ed elaborare richieste complesse (LLM)**: conversare, riassumere testi, estrarre informazioni ed elaborare dati.
 - **Selezionare ed eseguire tool autonomamente**: decidere se e quale tool di sistema invocare (tool selection e pipeline di feedback tramite modello decisionale Jev-style).
-- **Interagire con il sistema operativo Linux**: eseguire comandi bash, avviare applicazioni desktop (es. Spotify, browser), gestire file e directory.
+- **Interagire con il sistema operativo (Linux e Windows)**: eseguire comandi shell/CMD, avviare applicazioni desktop (es. Spotify, browser), gestire file e directory.
 - **Ispezionare il Web in tempo reale**: scaricare pagine web, estrarre titoli, metadati e contenuti significativi tramite pipeline `curl` e sintesi automatica con backcall LLM.
 - **Trascrivere audio in testo (STT)**: supporto nativo sia tramite `whisper.cpp` locale sia tramite Speech Recognition browser nella GUI.
 
@@ -80,11 +80,13 @@ Tiny Jarvis include una serie di strumenti modulari in grado di comunicare tra l
 
 ## 📋 Requisiti di Sistema
 
-- **Sistema Operativo**: Arch Linux o distribuzioni Arch-based (Manjaro, EndeavourOS, ecc.).
-- **Pacchetti necessari**:
-  - `python`, `python-huggingface-hub`, `python-requests`
+- **Sistemi Operativi Supportati**:
+  - **Linux**: Arch Linux / Manjaro / EndeavourOS oppure distro Debian-based (Ubuntu, Debian, Linux Mint, Pop!_OS, ecc.).
+  - **Windows**: Windows 10 / 11 (con Python 3, Node.js, Git e CMake installati).
+- **Pacchetti / Strumenti necessari**:
+  - `python3`, `requests`, `huggingface_hub`
   - `nodejs`, `npm`
-  - `cmake`, `git`, `gcc` / `clang`, `curl`
+  - `cmake`, `git`, `gcc`/`clang` o MSVC (Windows), `curl`
 - **Hardware raccomandato**:
   - RAM: 16 GB o superiore (per mantenere in memoria i modelli LLM, Jev e STT).
   - Spazio su disco: ~12–15 GB liberi per repository, build `llama.cpp` e pesi GGUF.
@@ -94,20 +96,22 @@ Tiny Jarvis include una serie di strumenti modulari in grado di comunicare tra l
 ## 🚀 Quick Start
 
 ### 1. Inizializzazione automatica
-Lo script [`init.sh`](file:///home/adp/Scrivania/tiny_jarvis/init.sh) installa le dipendenze di sistema tramite `pacman`, scarica i pesi GGUF ufficiali da Hugging Face e compila `llama-server`:
+
+- **Su Linux (Arch Linux / Debian / Ubuntu / Mint)**:
+  ```bash
+  bash init.sh
+  ```
+- **Su Windows (PowerShell / CMD)**:
+  ```cmd
+  python init.py
+  ```
+
+### 2. Avvio dell'Interfaccia Grafica (Consigliato 🌐)
+Lo script [`start.py`](file:///home/adp/Scrivania/tiny_jarvis/start.py) verifica la disponibilità dei server, avvia automaticamente i server di inferenza in background se non già attivi, avvia la GUI Node.js (porta `3000`) e apre la pagina nel browser:
 
 ```bash
-bash init.sh
+python start.py
 ```
-
-### 2. Avvio dei Server di Inferenza (Manuale)
-Se vuoi avviare manualmente i server `llama.cpp` in background (LLM su porta `8080` e Jev su porta `8081`):
-
-```bash
-bash start_servers.sh
-```
-
-### 3. Avvio dell'Interfaccia Grafica (Consigliato 🌐)
 Per avviare la Web GUI moderna in stile ChatGPT con controllo automatico dello stato dei server:
 
 - **Metodo Automatico (Consigliato)**:

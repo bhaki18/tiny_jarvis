@@ -139,7 +139,7 @@ const server = http.createServer(async (req, res) => {
                     logToChatFile(chatName, "jev_action", validCommand);
                 }
 
-                exec(validCommand, { cwd: EXE_TOOLS_PATH, shell: "/bin/bash" }, async (error, stdout, stderr) => {
+                exec(validCommand, { cwd: EXE_TOOLS_PATH, shell: true }, async (error, stdout, stderr) => {
                     const cleanStdout = (stdout || "").trim();
                     const cleanStderr = (stderr || "").trim();
 

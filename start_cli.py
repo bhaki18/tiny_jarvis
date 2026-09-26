@@ -1,16 +1,18 @@
 import os
+import sys
 import subprocess
 import time
 import urllib.request
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
-SERVERS_DIR = os.path.join(FILE_DIR, "start_servers.sh")
+SERVERS_SCRIPT = os.path.join(FILE_DIR, "start_servers.py")
 CLI_DIR = os.path.join(FILE_DIR, "CLI", "cli.js")
 log_file = open(os.path.join(FILE_DIR, "servers.log"), "w")
+
 # 1. Avvia i server in background
 print("Avvio dei server Tiny Jarvis...")
 servers_process = subprocess.Popen(
-    ["bash", SERVERS_DIR],
+    [sys.executable, SERVERS_SCRIPT],
     stdout=log_file,
     stderr=log_file
 )
@@ -34,5 +36,6 @@ print("Server pronti! Avvio della CLI...\n")
 try:
     subprocess.run(["node", CLI_DIR])
 finally:
-    # Opzionale: pulisce i server alla chiusura della CLI
+    # Pulizia server alla chiusura della CLI
     servers_process.terminate()
+

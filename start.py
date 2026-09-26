@@ -6,8 +6,11 @@ import json
 import signal
 import webbrowser
 
+import sys
+import platform
+
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
-SERVERS_DIR = os.path.join(FILE_DIR, "start_servers.sh")
+SERVERS_SCRIPT = os.path.join(FILE_DIR, "start_servers.py")
 GUI_SERVER_DIR = os.path.join(FILE_DIR, "GUI", "GUI_server.js")
 LOG_PATH = os.path.join(FILE_DIR, "servers.log")
 GUI_PORT = 3000
@@ -70,11 +73,16 @@ def main():
     else:
         print("[*] Avvio dei server Tiny Jarvis in background...")
         log_file = open(LOG_PATH, "w")
+        
+        popen_kwargs = {"stdout": log_file, "stderr": log_file}
+        if platform.system() == "Windows":
+            popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        else:
+            popen_kwargs["preexec_fn"] = os.setsid
+
         servers_process = subprocess.Popen(
-            ["bash", SERVERS_DIR],
-            stdout=log_file,
-            stderr=log_file,
-            preexec_fn=os.setsid
+            [sys.executable, SERVERS_SCRIPT],
+            **popen_kwargs
         )
         started_by_us = True
 
@@ -107,10 +115,13 @@ def main():
         gui_process.terminate()
         if started_by_us and servers_process:
             print("Arresto server Tiny Jarvis...")
-            try:
-                os.killpg(os.getpgid(servers_process.pid), signal.SIGTERM)
-            except Exception:
+            if platform.system() == "Windows":
                 servers_process.terminate()
+            else:
+                try:
+                    os.killpg(os.getpgid(servers_process.pid), signal.SIGTERM)
+                except Exception:
+                    servers_process.terminate()
 
 if __name__ == "__main__":
     main()

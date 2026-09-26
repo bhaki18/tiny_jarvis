@@ -1,6 +1,6 @@
 # Tiny Jarvis CLI 💻
 
-Interfaccia a riga di comando (CLI) per **Tiny Jarvis**, progettata per interagire con l'assistente vocale/testuale direttamente dal terminale Linux con tempi di risposta immediati e basso consumo di risorse.
+Interfaccia a riga di comando (CLI) per **Tiny Jarvis**, progettata per interagire con l'assistente vocale/testuale direttamente dal terminale (Linux e Windows) con tempi di risposta immediati e basso consumo di risorse.
 
 ---
 
@@ -26,7 +26,7 @@ python start_cli.py
 ```
 
 ### Metodo 2: Avvio Diretto Node.js
-Se i server di inferenza sono già in esecuzione (`bash start_servers.sh`):
+Se i server di inferenza sono già in esecuzione (`python start_servers.py`):
 
 ```bash
 node CLI/cli.js

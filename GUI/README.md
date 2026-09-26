@@ -2,7 +2,7 @@
 
 Interfaccia grafica desktop moderna per **Tiny Jarvis**, progettata per offrire un'esperienza d'uso fluida, elegante e minimalista ispirata a **ChatGPT (Dark Theme)**.
 
-Costruita interamente con tecnologie web standard (**HTML5, Vanilla CSS3 e Vanilla JavaScript**) senza dipendenze frontend pesanti, e supportata da un backend locale leggero in **Node.js** ([`GUI_server.js`](file:///home/adp/Scrivania/tiny_jarvis/GUI/GUI_server.js)) che gestisce le API locali e la reale esecuzione dei comandi di sistema sul tuo computer Linux.
+Costruita interamente con tecnologie web standard (**HTML5, Vanilla CSS3 e Vanilla JavaScript**) senza dipendenze frontend pesanti, e supportata da un backend locale leggero in **Node.js** ([`GUI_server.js`](file:///home/adp/Scrivania/tiny_jarvis/GUI/GUI_server.js)) che gestisce le API locali e la reale esecuzione dei comandi di sistema sul tuo computer (Linux e Windows).
 
 ---
 
@@ -58,11 +58,9 @@ python start.py
 ```
 
 ### Metodo 2: Avvio Diretto Node.js
-Se i server di inferenza sono già stati avviati (tramite `bash start_servers.sh`):
+Se i server di inferenza sono già stati avviati (tramite `python start_servers.py`):
 
 ```bash
-node GUI/GUI_servers.js
-# oppure
 node GUI/GUI_server.js
 ```
 
